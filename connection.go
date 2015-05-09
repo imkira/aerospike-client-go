@@ -27,6 +27,10 @@ type Connection struct {
 	// timeout
 	timeout time.Duration
 
+	// duration after which connection is considered idle
+	maxIdle      time.Duration
+	idleDeadline time.Time
+
 	// connection object
 	conn net.Conn
 }
@@ -42,7 +46,7 @@ func errToTimeoutErr(err error) error {
 // A minimum timeout of 2 seconds will always be applied.
 // If the connection is not established in the specified timeout,
 // an error will be returned
-func NewConnection(address string, timeout time.Duration) (*Connection, error) {
+func NewConnection(address string, timeout, maxIdle time.Duration) (*Connection, error) {
 	newConn := &Connection{}
 
 	conn, err := net.DialTimeout("tcp", address, timeout)
@@ -51,11 +55,14 @@ func NewConnection(address string, timeout time.Duration) (*Connection, error) {
 		return nil, errToTimeoutErr(err)
 	}
 	newConn.conn = conn
+	newConn.maxIdle = maxIdle
+	newConn.refresh()
 
 	// set timeout at the last possible moment
 	if err := newConn.SetTimeout(timeout); err != nil {
 		return nil, err
 	}
+
 	return newConn, nil
 }
 
@@ -146,4 +153,14 @@ func (ctn *Connection) Authenticate(user string, password []byte) error {
 		}
 	}
 	return nil
+}
+
+// isFresh returns true if the connection has not yet reached the idle deadline.
+func (ctn *Connection) isFresh() bool {
+	return time.Now().Before(ctn.idleDeadline)
+}
+
+// refresh extends the idle deadline of the connection.
+func (ctn *Connection) refresh() {
+	ctn.idleDeadline = time.Now().Add(ctn.maxIdle)
 }

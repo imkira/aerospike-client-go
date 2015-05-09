@@ -26,7 +26,7 @@ func main() {
 	log.SetFlags(0)
 
 	// connect to the host
-	if conn, err := NewConnection("localhost:3000", 10*time.Second); err != nil {
+	if conn, err := NewConnection("localhost:3000", 10*time.Second, 14*time.Second); err != nil {
 		log.Fatalln(err.Error())
 	} else {
 		if infoMap, err := RequestInfo(conn, ""); err != nil {

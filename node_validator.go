@@ -77,7 +77,7 @@ func (ndv *nodeValidator) setAliases(host *Host) error {
 func (ndv *nodeValidator) setAddress(timeout time.Duration) error {
 	for _, alias := range ndv.aliases {
 		address := net.JoinHostPort(alias.Name, strconv.Itoa(alias.Port))
-		conn, err := NewConnection(address, time.Second)
+		conn, err := NewConnection(address, time.Second, defaultMaxIdle)
 		if err != nil {
 			return err
 		}
